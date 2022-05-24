@@ -19,6 +19,7 @@ async function run() {
     try {
         await client.connect();
         const toolCollection = client.db('tools_provita').collection('tools');
+        const purchaseCollection = client.db('tools_provita').collection('purchase');
 
         // all data load
         app.get('/tool', async (req, res) => {
@@ -36,6 +37,19 @@ async function run() {
             res.send(tool);
         });
 
+        app.post("/purchase", async (req, res) => {
+            const purchase = req.body;
+            const result = await purchaseCollection.insertOne(purchase);
+            res.send(result);
+        });
+
+        // dashboard
+        app.get("/order", async (req, res) => {
+            const orderEmail = req.query.orderEmail;
+            const query = { orderEmail: orderEmail };
+            const orders = await purchaseCollection.find(query).toArray();
+            res.send(orders);
+        })
     }
     finally { }
 }
