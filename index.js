@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { ObjectID } = require('bson');
 
@@ -20,6 +21,7 @@ async function run() {
         await client.connect();
         const toolCollection = client.db('tools_provita').collection('tools');
         const purchaseCollection = client.db('tools_provita').collection('purchase');
+        const userCollection = client.db('tools_provita').collection('user');
 
         // all data load
         app.get('/tool', async (req, res) => {
@@ -50,6 +52,21 @@ async function run() {
             const orders = await purchaseCollection.find(query).toArray();
             res.send(orders);
         })
+
+        // user
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.SECRET_TOKEN, { expiresIn: '24hr' });
+            res.send({ result, token });
+        });
+
     }
     finally { }
 }
