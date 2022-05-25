@@ -40,6 +40,19 @@ async function run() {
         const purchaseCollection = client.db('tools_provita').collection('purchase');
         const userCollection = client.db('tools_provita').collection('user');
 
+
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+        }
+
+
         // all data load
         app.get('/tool', async (req, res) => {
             const query = {};
@@ -66,7 +79,6 @@ async function run() {
         app.get("/order", verifyJWT, async (req, res) => {
             const orderEmail = req.query.orderEmail;
             const decodedEmail = req.decoded.email;
-            console.log(decodedEmail);
             if (orderEmail === decodedEmail) {
                 const query = { orderEmail: orderEmail };
                 const orders = await purchaseCollection.find(query).toArray();
@@ -97,7 +109,7 @@ async function run() {
             res.send(users);
         });
         // admin
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
@@ -105,8 +117,23 @@ async function run() {
             };
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
-        }
-        );
+        });
+
+        // for admin
+        app.get('/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        });
+        // new product add
+        app.post('/tool', verifyJWT, verifyAdmin, async (req, res) => {
+            const newProduct = req.body;
+            const result = await toolCollection.insertOne(newProduct);
+            res.send(result)
+        });
+
+
     }
     finally { }
 }
