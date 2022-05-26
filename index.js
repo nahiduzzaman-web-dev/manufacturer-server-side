@@ -132,6 +132,13 @@ async function run() {
             const result = await toolCollection.insertOne(newProduct);
             res.send(result)
         });
+        // delete products
+        app.delete('/tool/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectID(id) };
+            const result = await toolCollection.deleteOne(filter);
+            res.send(result)
+        });
 
 
     }
