@@ -40,6 +40,7 @@ async function run() {
         const purchaseCollection = client.db('tools_provita').collection('purchase');
         const userCollection = client.db('tools_provita').collection('user');
         const reviewCollection = client.db('tools_provita').collection('review');
+        const profileCollection = client.db('tools_provita').collection('profile');
 
 
         const verifyAdmin = async (req, res, next) => {
@@ -154,6 +155,31 @@ async function run() {
             const cursor = reviewCollection.find(query);
             const reviews = await cursor.toArray();
             res.send(reviews);
+        });
+        // profile
+        app.post('/profile', verifyJWT, async (req, res) => {
+            const profile = req.body;
+            const result = await profileCollection.insertOne(profile);
+            res.send(result)
+        });
+        app.get('/profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await profileCollection.findOne(query);
+            res.send(result)
+        });
+        app.put('/profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const updateProfile = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    updateProfile
+                },
+            };
+            const result = await profileCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
         });
     }
     finally { }
