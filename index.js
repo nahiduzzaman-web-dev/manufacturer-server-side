@@ -39,6 +39,7 @@ async function run() {
         const toolCollection = client.db('tools_provita').collection('tools');
         const purchaseCollection = client.db('tools_provita').collection('purchase');
         const userCollection = client.db('tools_provita').collection('user');
+        const reviewCollection = client.db('tools_provita').collection('review');
 
 
         const verifyAdmin = async (req, res, next) => {
@@ -139,8 +140,21 @@ async function run() {
             const result = await toolCollection.deleteOne(filter);
             res.send(result)
         });
+        // delete product
 
+        // review
+        app.post('/review', verifyJWT, async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result)
+        });
 
+        app.get('/reviewCollection', async (req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
     }
     finally { }
 }
